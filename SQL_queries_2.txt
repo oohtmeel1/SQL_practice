@@ -1,0 +1,305 @@
+CREATE TABLE weather (
+    city            varchar(80),
+    temp_lo         int,           -- low temperature
+    temp_hi         int,           -- high temperature
+    prcp            real,          -- precipitation
+    date            date
+);
+
+CREATE TABLE cities (
+    name            varchar(80),
+    location        point
+);
+
+INSERT INTO weather VALUES ('San Francisco', 46, 50, 0.25, '1994-11-27');
+
+INSERT INTO cities VALUES ('San Francisco', '(-194.0, 53.0)');
+
+
+INSERT INTO weather (city, temp_lo, temp_hi, prcp, date)
+    VALUES ('San Francisco', 43, 57, 0.0, '1994-11-29');
+
+
+INSERT INTO weather (date, city, temp_hi, temp_lo)
+    VALUES ('1994-11-29', 'Hayward', 54, 37);
+
+Select city, (temp_hi+temp_lo)/2 AS temp_avg,date FROM weather;
+
+SELECT DISTINCT city
+    FROM weather
+    ORDER BY city;
+
+
+-- Outer joins
+
+SELECT *
+    FROM weather LEFT OUTER JOIN cities ON weather.city = cities.name;
+
+
+
+-- Self Join
+
+SELECT w1.city, w1.temp_lo AS low, w1.temp_hi AS high,
+       w2.city, w2.temp_lo AS low, w2.temp_hi AS high
+    FROM weather w1 JOIN weather w2
+        ON w1.temp_lo < w2.temp_lo AND w1.temp_hi > w2.temp_hi;
+
+
+-- Shorten weather 
+
+
+SELECT *
+    FROM weather w JOIN cities c ON w.city = c.name;
+
+
+-- Agrregate 
+
+
+SELECT city FROM weather
+    WHERE temp_lo = (SELECT max(temp_lo) FROM weather);
+
+
+
+-- Get the number of readings and the max 
+
+
+SELECT city, count(*), max(temp_lo)
+    FROM weather
+    GROUP BY city;
+
+
+-- Query by less than 40
+
+SELECT city, count(*), max(temp_lo)
+    FROM weather
+    GROUP BY city
+    HAVING max(temp_lo) < 40;
+
+-- Where cities start with S
+
+SELECT city, count(*), max(temp_lo)
+    FROM weather
+    WHERE city LIKE 'S%'            -- (1)
+    GROUP BY city;
+
+SELECT city, count(*) FILTER (WHERE temp_lo < 45), max(temp_lo)
+    FROM weather
+    GROUP BY city;
+
+
+
+UPDATE weather
+    SET temp_hi = temp_hi - 2,  temp_lo = temp_lo - 2
+    WHERE date > '1994-11-28';
+
+
+
+
+
+CREATE TABLE cities (
+        name     varchar(80) primary key,
+        location point
+);
+
+CREATE TABLE weather (
+        city      varchar(80) references cities(name),
+        temp_lo   int,
+        temp_hi   int,
+        prcp      real,
+        date      date
+);
+
+
+
+-- Querying and updating transactons
+
+
+-- start transaction 
+Begin;
+
+-- insert a new row into accounts table
+
+INSERT INTO accounts(name,balance)
+VALUES('Alice',10000);
+
+-- commit changes
+Commit;
+
+--
+
+
+
+
+--start transaction 
+
+Begin;
+
+-- deduct 1000 from account 1
+Update accounts
+Set balance = balance - 1000
+where id =1;
+
+--add 1000 to account 2
+
+update accounts
+set balance = balance +1000
+where id = 2;
+
+-- select data from accounts
+select id,name,balance
+from accounts;
+
+--commit
+commit;
+
+-- there are also save points and such 
+
+
+BEGIN;
+UPDATE accounts SET balance = balance - 100.00
+    WHERE name = 'Alice';
+SAVEPOINT my_savepoint;
+UPDATE accounts SET balance = balance + 100.00
+    WHERE name = 'Bob';
+-- oops ... forget that and use Wally's account
+ROLLBACK TO my_savepoint;
+UPDATE accounts SET balance = balance + 100.00
+    WHERE name = 'Wally';
+COMMIT;
+
+
+
+--students
+
+
+CREATE TABLE students (
+    roll_number integer NOT NULL,
+    name        varchar(40) NOT NULL
+);
+
+
+CREATE TABLE grades (
+    roll_number integer NOT NULL,
+    name        varchar(40) NOT NULL,
+	grade1 integer NOT NULL,
+	grade2 integer NOT NULL,
+	grade3 integer NOT NULL
+);
+
+insert into students(roll_number,name)
+values(1,'bob joe'),
+		(2,'billy abc'),
+		(3, 'suzie whatever'),
+		(4, 'defg pqrs'),
+		(5, 'jessie james'),
+		(6, 'ugly betty');
+
+insert into grades(roll_number,name,grade1,grade2,grade3)
+values(1,'bob joe',50,20,10),
+		(2,'billy abc',10,10,10),
+		(3, 'suzie whatever',80,50,20),
+		(4, 'defg pqrs',60,60,10),
+		(5, 'jessie james',1,12,25),
+		(6, 'ugly betty',80,80,100);
+
+
+-- apperently if the columns have the same name you have to use "USING"
+-- Also you have to set the columns to be something
+
+select students.roll_number AS roll_number, students.name AS name
+from students
+inner join grades
+USING (roll_number);
+
+
+
+--math
+
+select roll_number
+from grades
+where (grade1 + grade2 + grade3)/3 > 80;
+
+
+
+---
+
+put together qury that works 
+
+select students.roll_number AS roll_number, students.name AS name
+from students
+inner join grades
+USING (roll_number)
+where  (grade1 + grade2 + grade3)/3 > 80;
+
+
+
+
+
+
+____
+
+-Continuing weather
+
+
+Create View myview as
+	Select name, temp_lo, temp_hi, prcp, date, location
+	FROM weather,cities
+	WHERE city =name;
+	
+SELECT * from myview;
+
+
+
+
+-- Making foreign Key associations with specific variables prevents you from adding data
+
+-- warning only run this if you are sure you don't need it
+
+
+CREATE TABLE cities (
+        name     varchar(80) primary key,
+        location point
+);
+
+CREATE TABLE weather (
+        city      varchar(80) references cities(name),
+        temp_lo   int,
+        temp_hi   int,
+        prcp      real,
+        date      date
+);
+
+-- because this now wont work
+
+INSERT INTO weather VALUES ('Berkeley', 45, 53, 0.0, '1994-11-28');
+
+
+--- create employee salary table and populate with values
+
+Create table empsalary(
+	depname varchar(255),
+	empno int,
+	salary int);
+
+
+insert into empsalary (depname,empno,salary)
+Values('develop',11,5200),('develop',7,4200),
+('develop', 9, 4500),('develop',8,6000),('develop',10,5200),
+('personnel',5,3500),('personnel',2,3900),('sales',3,4800),
+('sales',3,5000),('sales',4,4800);
+
+
+--partitioning tables 
+
+SELECT depname, empno, salary, avg(salary) OVER (Partition by depname)
+FROM empsalary;
+
+
+--ranking variables
+
+SELECT depname, empno, salary,
+	rank() over (Partition BY depname order by salary desc)
+from empsalary;
+
+SELECT salary, sum(salary) OVER () FROM empsalary;
+
