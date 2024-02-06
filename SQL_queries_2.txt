@@ -303,3 +303,30 @@ from empsalary;
 
 SELECT salary, sum(salary) OVER () FROM empsalary;
 
+SELECT sum(salary) OVER w, avg(salary) OVER w
+  FROM empsalary
+  WINDOW w AS (PARTITION BY depname ORDER BY salary DESC);
+
+
+
+
+--3.6 Inheritance for databases
+Create Table Cities(
+name	text,
+population	real,
+elevation int -- (in ft)
+);
+
+
+Create table capitals (
+state char (2) Unique Not Null)
+Inherits (cities);
+
+Select name, elevation
+From cities
+Where elevation > 500;
+
+
+SELECT name, elevation
+    FROM ONLY cities
+    WHERE elevation > 500;  -- only selects from only cities
