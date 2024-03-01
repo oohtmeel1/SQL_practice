@@ -310,6 +310,10 @@ SELECT sum(salary) OVER w, avg(salary) OVER w
 
 
 
+
+
+
+
 --3.6 Inheritance for databases
 Create Table Cities(
 name	text,
@@ -393,3 +397,56 @@ INSERT INTO COMPANY VALUES (10, 'James', 45, 'Texas', 5000.00);
 
 Select Name, Sum(SALARY)
 from Company Group by Name order by Name DESC;
+
+
+
+
+
+--Cool conditional format, but not correct for making a pivot table
+-- Returns null where the condition is not matched
+
+select empno,
+	CASE WHEN depname ='develop' THEN 'yes'
+	ELSE NULL END AS develop_dep
+from empsalary;
+
+
+
+--The following creates a pivot table with some null values where there are no entries (empsalary)
+
+
+select min(developers)
+,min(personnel)
+,min(sales)
+from(
+	SELECT depname,empno,
+	CASE WHEN depname ='develop' then empno else NULL END as developers,
+	CASE WHEN depname='personnel' then empno else NULL END as personnel,
+	CASE WHEN depname ='sales' then empno else NULL END as sales,
+	row_number() over (partition by depname order by empno)
+	as r1
+	FROM empsalary
+order by r1) X
+Group by r1
+order by r1 asc
+
+
+
+
+-- Combine two tables returning null (if it had to) where the tables do not have entries
+
+
+Select empsalary.depname,empsalary.salary from 
+empsalary left outer join Company
+on empsalary.empno = Company.id;
+
+
+
+--Get the second highest salary from emp table
+
+
+select
+(select distinct Salary 
+from empsalary order by salary desc 
+limit 1 offset 1) 
+as SecondHighestSalary;
